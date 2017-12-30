@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<project name="lang" default="parser">
+
+	<!-- ANTLR version -->
+	<property name="antlr.version" value="4.5" />
+
+	<!-- SpecLang parser -->
+	<target name="speclang-check-parser">
+		<condition property="speclang.parser.uptodate">
+			<and>
+				<uptodate srcfile="src/speclang/SpecLang.g" targetfile="src/speclang/parser/SpecLangParser.java" />
+				<uptodate srcfile="src/speclang/SpecLang.g" targetfile="src/speclang/parser/SpecLangLexer.java" />
+				<uptodate srcfile="src/speclang/SpecLang.g" targetfile="src/speclang/parser/SpecLangListener.java" />
+			</and>
+		</condition>
+	</target>
+
+	<target name="speclang" depends="speclang-check-parser" unless="speclang.parser.uptodate">
+		<java jar="lib/antlr-${antlr.version}-complete.jar" dir="src/speclang/" fork="true" failonerror="true">
+			<arg value="-o" />
+			<arg value="parser/" />
+			<arg value="-no-listener" />
+			<arg value="-package" />
+			<arg value="speclang.parser; import static speclang.AST.*" />
+			<arg value="SpecLang.g" />
+		</java>
+	</target>
+
+	<target name="parser" depends="speclang" >
+	</target>
+	
+</project>
