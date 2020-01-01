@@ -1,10 +1,10 @@
 grammar SpecLang;
  @header {
-  package speclang.parser; 
-  import static speclang.AST.*; 
-  import speclang.Type; 
-  import static speclang.Type.*; 
-  import java.util.ArrayList; 
+ package speclang.parser; 
+ import static speclang.AST.*; 
+ import speclang.Type; 
+ import static speclang.Type.*; 
+ import java.util.ArrayList; 
  }
  program returns [Program ast]        
  		locals [ArrayList<DefineDecl> defs, Exp expr]

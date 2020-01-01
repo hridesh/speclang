@@ -20,8 +20,6 @@
 			<arg value="-o" />
 			<arg value="parser/" />
 			<arg value="-no-listener" />
-			<arg value="-package" />
-			<arg value="speclang.parser; import static speclang.AST.*" />
 			<arg value="SpecLang.g" />
 		</java>
 	</target>
