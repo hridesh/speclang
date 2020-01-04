@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 
+import speclang.AST.Exp;
+import speclang.AST.FuncSpec;
 import speclang.Env.*;
 
 public class Evaluator implements Visitor<Value, Env<Value>> {
@@ -374,6 +376,36 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 		return new Value.UnitVal();
 	}
 
+	@Override
+	public Value visit(FuncSpec s, Env<Value> env) {
+		// Are we checking preconditions or postconditions?
+		try {
+			env.get("result"); // result of function
+			// Check postconditions
+			for (Exp postcondition : s.postconditions()) {
+				Value postcond_value = postcondition.accept(this, env);
+				if (!(postcond_value instanceof Value.BoolVal))
+					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
+				Value.BoolVal condition = (Value.BoolVal) postcond_value;
+				if (!condition.v())
+					return condition;
+
+			}
+		} catch (LookupException e) {
+			// Check preconditions
+			for (Exp precondition : s.preconditions()) {
+				Value precond_value = precondition.accept(this, env);
+				if (!(precond_value instanceof Value.BoolVal))
+					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
+				Value.BoolVal condition = (Value.BoolVal) precond_value;
+				if (!condition.v())
+					return condition;
+
+			}
+		}
+		return new Value.BoolVal(true);
+	}
+
 	private Env<Value> initialEnv() {
 		Env<Value> initEnv = new EmptyEnv<>();
 
@@ -407,4 +439,5 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 	public Evaluator(Reader reader) {
 		_reader = reader;
 	}
+
 }
