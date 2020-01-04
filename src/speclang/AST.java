@@ -994,7 +994,15 @@ public interface AST {
 		public Object accept(Visitor visitor, Object env) {
 			return visitor.visit(this, env);
 		}
-
+		
+		public static final FuncSpec defaultspec;
+		static {
+			List<Exp> preconds = new ArrayList();
+			List<Exp> postconds = new ArrayList(); 
+			preconds.add(new BoolExp(true));
+			postconds.add(new BoolExp(true));
+			defaultspec = new FuncSpec(preconds, postconds);
+		}
 	}
 
 	public interface Visitor<T, U> {

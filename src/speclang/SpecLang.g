@@ -166,7 +166,7 @@ unittype returns [UnitT ty] :
         ;
 
  lambdaexp returns [LambdaExp ast] 
-        locals [ArrayList<String> formals, Spec funsp = null, ArrayList<Type> types = new ArrayList<Type>() ]
+        locals [ArrayList<String> formals, Spec funsp = FuncSpec.defaultspec, ArrayList<Type> types = new ArrayList<Type>() ]
  		@init { $formals = new ArrayList<String>(); } :
  		'(' Lambda 
  			'(' (id=Identifier ':' ty1=type { $formals.add($id.text); $types.add($ty1.ty); } )* 
