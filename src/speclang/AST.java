@@ -1066,7 +1066,7 @@ public interface AST {
 
 		public T visit(AST.FreeExp e, U env);
 
-		public T visit(AST.FuncSpec e, U env);
+		public T visit(AST.FuncSpec s, U env);
 
 	}
 }
