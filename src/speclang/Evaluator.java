@@ -140,7 +140,7 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 
 	@Override
 	public Value visit(LambdaExp e, Env<Value> env) { // New for funclang.
-		return new Value.FunVal(env, e.formals(), e.spec(), e.body());
+		return new Value.FunVal(env, e.formals(), e.spec(), e.body()); //Notice that function values also contain specifications now.
 	}
 
 	@Override
@@ -165,7 +165,19 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 		for (int index = 0; index < formals.size(); index++)
 			fun_env = new ExtendEnv<>(fun_env, formals.get(index), actuals.get(index));
 
-		return (Value) operator.body().accept(this, fun_env);
+		// Runtime verification of specifications.
+		// First check the precondition
+		Value.BoolVal precondition = (Value.BoolVal) operator.spec().accept(this, fun_env);
+		if (precondition.v()) { //Precondition is true
+			Value fresult = (Value) operator.body().accept(this, fun_env); 
+			//Create a new environment to check postconditions that has the result of the function.
+			Env<Value> post_env = new ExtendEnv<>(fun_env, "result", fresult);
+			Value.BoolVal postcondition = (Value.BoolVal) operator.spec().accept(this, post_env);
+			if (postcondition.v()) // Postcondition is true
+				return fresult;
+			return new Value.DynamicError("Postcondition violation in call " + ts.visit(e, null));
+		}
+		return new Value.DynamicError("Precondition violation in call " + ts.visit(e, null));
 	}
 
 	/* Helper for CallExp */
