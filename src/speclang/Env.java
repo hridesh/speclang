@@ -105,7 +105,7 @@ public interface Env<T> {
 			for (int index = 0; index < size; index++) {
 				if (search_var.equals(_names.get(index))) {
 					FunVal f = _funs.get(index);
-					return new Value.FunVal(this, f.formals(), f.body());
+					return new Value.FunVal(this, f.formals(), f.spec(), f.body());
 				}
 			}
 			return _saved_env.get(search_var);

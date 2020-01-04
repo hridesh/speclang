@@ -30,9 +30,10 @@ public interface Value {
 		private Spec _spec;
 		private Exp _body;
 
-		public FunVal(Env<Value> env, List<String> formals, Exp body) {
+		public FunVal(Env<Value> env, List<String> formals, Spec spec, Exp body) {
 			_env = env;
 			_formals = formals;
+			_spec = spec;
 			_body = body;
 		}
 
@@ -56,6 +57,10 @@ public interface Value {
 			String result = "(lambda ( ";
 			for (String formal : _formals)
 				result += formal + " ";
+			if(_spec != null) {
+				result += "| ";
+				result += _spec.accept(new Printer.Formatter(), _env);
+			}
 			result += ") ";
 			result += _body.accept(new Printer.Formatter(), _env);
 			return result + ")";

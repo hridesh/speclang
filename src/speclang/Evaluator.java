@@ -140,7 +140,7 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 
 	@Override
 	public Value visit(LambdaExp e, Env<Value> env) { // New for funclang.
-		return new Value.FunVal(env, e.formals(), e.body());
+		return new Value.FunVal(env, e.formals(), e.spec(), e.body());
 	}
 
 	@Override
@@ -416,7 +416,7 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 		List<String> formals = new ArrayList<>();
 		formals.add("file");
 		Exp body = new AST.ReadExp(new VarExp("file"));
-		Value.FunVal readFun = new Value.FunVal(initEnv, formals, body);
+		Value.FunVal readFun = new Value.FunVal(initEnv, formals, null, body); //Exercise: What would the specification here?
 		initEnv = new Env.ExtendEnv<>(initEnv, "read", readFun);
 
 		/*
@@ -426,7 +426,7 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 		formals = new ArrayList<>();
 		formals.add("file");
 		body = new EvalExp(new AST.ReadExp(new VarExp("file")));
-		Value.FunVal requireFun = new Value.FunVal(initEnv, formals, body);
+		Value.FunVal requireFun = new Value.FunVal(initEnv, formals, null, body); //Exercise: What would the specification here?
 		initEnv = new Env.ExtendEnv<>(initEnv, "require", requireFun);
 
 		/* Add new built-in procedures here */
