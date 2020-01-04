@@ -56,6 +56,23 @@ grammar SpecLang;
     	| free=freeexp { $ast = $free.ast; }
     	;
  
+ // ******************* New Specifications for SpecLang **********************
+spec returns [Spec ast]: 
+		fsp=funspec { $ast = $fsp.sp; }
+        ;
+        
+funspec returns [FuncSpec sp]
+        locals [ArrayList<Exp> preconditions, ArrayList<Exp> postconditions] 
+        @init { $preconditions = new ArrayList<Exp>(); $postconditions = new ArrayList<Exp>(); } :                
+ 		//'(' 
+ 			( pre1=exp {  $preconditions.add($pre1.ast); } )* 
+ 			'->' 
+ 			( post1=exp {  $postconditions.add($post1.ast); } )* 
+ 		//')' 
+ 		{ $sp = new FuncSpec($preconditions, $postconditions); }
+ 		;
+        
+ 
  // ******************* Type Expressions for TypeLang **********************
 type returns [Type ty]: 
 		bty=booltype { $ty = $bty.ty; }
@@ -150,20 +167,15 @@ unittype returns [UnitT ty] :
          ')' { $ast = new FreeExp($e.ast); }
         ;
 
-
-// New Specifications for SpecLang
-
-
-
  lambdaexp returns [LambdaExp ast] 
-        locals [ArrayList<String> formals, ArrayList<Type> types = new ArrayList<Type>() ]
+        locals [ArrayList<String> formals, Spec funsp = null, ArrayList<Type> types = new ArrayList<Type>() ]
  		@init { $formals = new ArrayList<String>(); } :
  		'(' Lambda 
  			'(' (id=Identifier ':' ty1=type { $formals.add($id.text); $types.add($ty1.ty); } )* 
- 			('|' exp '->' exp)? 			
+ 			('|' sp=spec { $funsp = $sp.ast; } )? 			
  			')'
  			body=exp 
- 		')' { $ast = new LambdaExp($formals, $types, $body.ast); }
+ 		')' { $ast = new LambdaExp($formals, $types, $funsp, $body.ast); }
  		;
 
  callexp returns [CallExp ast] 
@@ -298,7 +310,7 @@ unittype returns [UnitT ty] :
  
  // Other Standard Expressions
  
-  numexp returns [NumExp ast]:
+ numexp returns [NumExp ast]:
  		n0=Number { $ast = new NumExp(Integer.parseInt($n0.text)); } 
   		| '-' n0=Number { $ast = new NumExp(-Integer.parseInt($n0.text)); }
   		| n0=Number Dot n1=Number { $ast = new NumExp(Double.parseDouble($n0.text+"."+$n1.text)); }
