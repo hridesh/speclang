@@ -113,8 +113,17 @@ public interface Spec {
 		}
 
 		@Override
-		public boolean checkPre(Evaluator evalutor, Env<Value> env) {
-			// TODO Auto-generated method stub
+		public boolean checkPre(Evaluator evaluator, Env<Value> env) {
+			for(Exp precondition : _preconditions) {
+				Value result = precondition.accept(evaluator, env);
+				if (!(result instanceof Value.BoolVal))
+					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(this, null));
+				Value.BoolVal condition = (Value.BoolVal) result; // Dynamic checking
+
+				if (!condition.v())
+					return false;
+
+			}
 			return false;
 		}
 
