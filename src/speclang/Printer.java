@@ -285,13 +285,13 @@ public class Printer {
 		}
 
 		public String visit(AST.FuncSpec e, Env<Void> env) {
-			String result = "(";
+			String result = "";
 			for (Exp precondition : e.preconditions())
 				result += precondition.accept(this, env) + " ";
 			result += "->";
 			for (Exp postcondition : e.postconditions())
 				result += postcondition.accept(this, env) + " ";
-			return result + ")";
+			return result;
 		}
 	
 	}

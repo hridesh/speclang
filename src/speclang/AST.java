@@ -973,10 +973,15 @@ public interface AST {
 	public static abstract class Spec extends ASTNode {
 	}
 
-	public static class FuncSpec extends Exp {
+	public static class FuncSpec extends Spec {
 		private List<Exp> preconditions;
 		private List<Exp> postconditions;
 
+		public FuncSpec(List<Exp> preconditions, List<Exp> postconditions) {
+			this.preconditions = preconditions;
+			this.postconditions = postconditions;
+		}
+		
 		public List<Exp> preconditions() {
 			return this.preconditions;
 		}
