@@ -13,7 +13,7 @@ import java.util.List;
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public interface AST {
 	public static abstract class ASTNode implements AST {
-		public abstract Object accept(Visitor visitor, Object env);
+		public abstract <T> T accept(Visitor visitor, Object env);
 	}
 
 	public static class Program extends ASTNode {
@@ -964,6 +964,28 @@ public interface AST {
 		}
 	}
 
+	public static abstract class Spec extends ASTNode {
+	}
+
+	public static class FuncSpec extends Exp {
+		private List<Exp> preconditions;
+		private List<Exp> postconditions;
+
+		public List<Exp> preconditions() {
+			return this.preconditions;
+		}
+
+		public List<Exp> postconditions() {
+			return this.postconditions;
+		}
+
+		@Override
+		public Object accept(Visitor visitor, Object env) {
+			return visitor.visit(this, env);
+		}
+
+	}
+
 	public interface Visitor<T, U> {
 		// This interface should contain a signature for each concrete AST node.
 		public T visit(AST.AddExp e, U env);
@@ -1043,5 +1065,8 @@ public interface AST {
 		public T visit(AST.AssignExp e, U env);
 
 		public T visit(AST.FreeExp e, U env);
+
+		public T visit(AST.FuncSpec e, U env);
+
 	}
 }
