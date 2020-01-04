@@ -3,6 +3,7 @@ package speclang;
 import java.util.List;
 
 import speclang.AST.Exp;
+import speclang.AST.Spec;
 
 public interface Value {
 	public String tostring();
@@ -26,6 +27,7 @@ public interface Value {
 	static class FunVal implements Value {
 		private Env<Value> _env;
 		private List<String> _formals;
+		private Spec _spec;
 		private Exp _body;
 
 		public FunVal(Env<Value> env, List<String> formals, Exp body) {
@@ -40,6 +42,10 @@ public interface Value {
 
 		public List<String> formals() {
 			return _formals;
+		}
+
+		public Spec spec() {
+			return _spec;
 		}
 
 		public Exp body() {
