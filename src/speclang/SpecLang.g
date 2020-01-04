@@ -151,13 +151,17 @@ unittype returns [UnitT ty] :
         ;
 
 
-// New Expressions for FuncLang
+// New Specifications for SpecLang
+
+
 
  lambdaexp returns [LambdaExp ast] 
         locals [ArrayList<String> formals, ArrayList<Type> types = new ArrayList<Type>() ]
  		@init { $formals = new ArrayList<String>(); } :
  		'(' Lambda 
- 			'(' (id=Identifier ':' ty1=type { $formals.add($id.text); $types.add($ty1.ty); } )* ')'
+ 			'(' (id=Identifier ':' ty1=type { $formals.add($id.text); $types.add($ty1.ty); } )* 
+ 			('|' exp '->' exp)? 			
+ 			')'
  			body=exp 
  		')' { $ast = new LambdaExp($formals, $types, $body.ast); }
  		;
