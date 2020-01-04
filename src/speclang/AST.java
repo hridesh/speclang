@@ -341,10 +341,12 @@ public interface AST {
 		List<String> _formals;
 		List<Type> _types;
 		Exp _body;
+		Spec _spec; // New for SpecLang
 
-		public LambdaExp(List<String> formals, List<Type> types, Exp body) {
+		public LambdaExp(List<String> formals, List<Type> types, Spec spec, Exp body) {
 			_formals = formals;
 			_types = types;
+			_spec = spec;
 			_body = body;
 		}
 
@@ -354,6 +356,10 @@ public interface AST {
 
 		public List<Type> formal_types() {
 			return _types;
+		}
+
+		public Spec spec() {
+			return _spec;
 		}
 
 		public Exp body() {
