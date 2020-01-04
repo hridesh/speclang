@@ -64,11 +64,9 @@ spec returns [Spec ast]:
 funspec returns [FuncSpec sp]
         locals [ArrayList<Exp> preconditions, ArrayList<Exp> postconditions] 
         @init { $preconditions = new ArrayList<Exp>(); $postconditions = new ArrayList<Exp>(); } :                
- 		//'(' 
  			( pre1=exp {  $preconditions.add($pre1.ast); } )* 
  			'->' 
  			( post1=exp {  $postconditions.add($post1.ast); } )* 
- 		//')' 
  		{ $sp = new FuncSpec($preconditions, $postconditions); }
  		;
         
