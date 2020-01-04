@@ -551,6 +551,27 @@ public class Checker implements Visitor<Type, Env<Type>> {
 		return BoolT.getInstance();
 	}
 
+	@Override
+	public Type visit(FuncSpec e, Env<Type> env) {
+		for (Exp precondition : e.preconditions()) {
+			Type precond_type = (Type) precondition.accept(this, env);
+			if (precond_type instanceof ErrorT) 
+				return precond_type;
+			if (!(precond_type instanceof BoolT)) 
+				return new ErrorT("The precondition expects a boolean type " + "found " + precond_type.tostring() + " in "
+						+ ts.visit(e, null));
+		}
+		for (Exp postcondition : e.postconditions()) {
+			Type postcond_type = (Type) postcondition.accept(this, env);
+			if (postcond_type instanceof ErrorT) 
+				return postcond_type;
+			if (!(postcond_type instanceof BoolT))
+				return new ErrorT("The postcondition expects a boolean type " + "found " + postcond_type.tostring() + " in "
+						+ ts.visit(e, null));
+		}
+		return UnitT.getInstance();
+	}
+
 	public static void main(String[] args) {
 		System.out.println("TypeLang: Type a program to check and press the enter key,\n"
 				+ "e.g. ((lambda (x: num y: num z : num) (+ x (+ y z))) 1 2 3) \n" + "or try (let ((x : num 2)) x) \n"
@@ -577,4 +598,5 @@ public class Checker implements Visitor<Type, Env<Type>> {
 		}
 
 	}
+
 }
