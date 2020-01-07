@@ -50,108 +50,32 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 	}
 
 	public Boolean visit(LetExp e, Env<Type> env) {
-		List<String> names = e.names();
 		List<Exp> value_exps = e.value_exps();
-		List<Type> types = e.varTypes();
-		List<Type> values = new ArrayList<Type>(value_exps.size());
-
-		int i = 0;
+		boolean purity = true;
 		for (Exp exp : value_exps) {
-			Type type = (Type) exp.accept(this, env);
-			if (type instanceof ErrorT) {
-				return type;
-			}
-
-			Type argType = types.get(i);
-			if (!type.typeEqual(argType)) {
-				return new ErrorT(
-						"The declared type of the " + i + " let variable and the actual type mismatch, expect "
-								+ argType.tostring() + " found " + type.tostring() + " in " + ts.visit(e, null));
-			}
-
-			values.add(type);
-			i++;
+			purity = purity && (boolean) exp.accept(this, env);
 		}
 
-		Env<Type> new_env = env;
-		for (int index = 0; index < names.size(); index++)
-			new_env = new ExtendEnv<Type>(new_env, names.get(index), values.get(index));
-
-		return (Type) e.body().accept(this, new_env);
+		return purity && (Boolean) e.body().accept(this, env);
 	}
 
 	public Boolean visit(DefineDecl d, Env<Type> env) {
-		return (Type) d._value_exp.accept(this, env);
+		return (Boolean) d._value_exp.accept(this, env);
 	}
 
 	public Boolean visit(LambdaExp e, Env<Type> env) {
-		List<String> names = e.formals();
-		List<Type> types = e.formal_types();
-
-		String message = "The declared type of a lambda expression should be " + "of function type in ";
-
-		// FuncT ft = (FuncT) type;
-		message = "The number of formal parameters and the number of "
-				+ "arguments in the function type do not match in ";
-		if (types.size() == names.size()) {
-			Env<Type> new_env = env;
-			int index = 0;
-			for (Type argType : types) {
-				new_env = new ExtendEnv<Type>(new_env, names.get(index), argType);
-				index++;
-			}
-
-			Type bodyType = (Type) e.body().accept(this, new_env);
-
-			if (bodyType instanceof ErrorT) {
-				return bodyType;
-			}
-
-			// create a new function type with arguments, and the type of
-			// the body as the return type. Notice, that the body type isn't
-			// given in any type annotation, but being computed here.
-			return new FuncT(types, bodyType);
-		}
-
-		return new ErrorT(message + ts.visit(e, null));
+		return (Boolean) e.body().accept(this, env);
 	}
 
 	public Boolean visit(CallExp e, Env<Type> env) {
 		Exp operator = e.operator();
 		List<Exp> operands = e.operands();
 
-		Type type = (Type) operator.accept(this, env);
-		if (type instanceof ErrorT) {
-			return type;
+		boolean purity = (Boolean) operator.accept(this, env);
+		for (Exp operand : operands) {
+			purity = purity && (Boolean) operand.accept(this, env);
 		}
-
-		String message = "Expect a function type in the call expression, found " + type.tostring() + " in ";
-		if (type instanceof FuncT) {
-			FuncT ft = (FuncT) type;
-
-			List<Type> argTypes = ft.argTypes();
-			int size_actuals = operands.size();
-			int size_formals = argTypes.size();
-
-			message = "The number of arguments expected is " + size_formals + " found " + size_actuals + " in ";
-			if (size_actuals == size_formals) {
-				for (int i = 0; i < size_actuals; i++) {
-					Exp operand = operands.get(i);
-					Type operand_type = (Type) operand.accept(this, env);
-
-					if (operand_type instanceof ErrorT) {
-						return operand_type;
-					}
-
-					if (!assignable(argTypes.get(i), operand_type)) {
-						return new ErrorT("The expected type of the " + i + " argument is " + argTypes.get(i).tostring()
-								+ " found " + operand_type.tostring() + " in " + ts.visit(e, null));
-					}
-				}
-				return ft.returnType();
-			}
-		}
-		return new ErrorT(message + ts.visit(e, null));
+		return purity;
 	}
 
 	public Boolean visit(LetrecExp e, Env<Type> env) {
