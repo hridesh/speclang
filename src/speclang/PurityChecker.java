@@ -1,13 +1,9 @@
 package speclang;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import speclang.AST.*;
-import speclang.Env.ExtendEnv;
-import speclang.Type.ErrorT;
-import speclang.Type.*;
 
 /**
  * This main class implements the purity checker of the interpreter.
@@ -24,7 +20,7 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 	}
 
 	public Boolean visit(Program p, Env<Type> env) {
-		boolean purity = true; 
+		boolean purity = true;
 		for (DefineDecl d : p.decls()) {
 			purity = purity && (Boolean) d.accept(this, env);
 		}
@@ -65,31 +61,15 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 	}
 
 	public Boolean visit(LetrecExp e, Env<Type> env) {
-		List<String> names = e.names();
-		List<Type> types = e.types();
 		List<Exp> fun_exps = e.fun_exps();
-
-		// collect the environment
-		Env<Type> new_env = env;
-		for (int index = 0; index < names.size(); index++) {
-			new_env = new ExtendEnv<Type>(new_env, names.get(index), types.get(index));
-		}
+		boolean purity = true;
 
 		// verify the types of the variables
-		for (int index = 0; index < names.size(); index++) {
-			Type type = (Type) fun_exps.get(index).accept(this, new_env);
-
-			if (type instanceof ErrorT) {
-				return type;
-			}
-
-			if (!assignable(types.get(index), type)) {
-				return new ErrorT("The expected type of the " + index + " variable is " + types.get(index).tostring()
-						+ " found " + type.tostring() + " in " + ts.visit(e, null));
-			}
+		for (int index = 0; index < fun_exps.size(); index++) {
+			purity = purity && (Boolean) fun_exps.get(index).accept(this, env);
 		}
 
-		return (Type) e.body().accept(this, new_env);
+		return purity && (Boolean) e.body().accept(this, env);
 	}
 
 	public Boolean visit(IfExp e, Env<Type> env) {
@@ -121,7 +101,7 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 
 		boolean purity = true;
 		for (Exp elem : elems) {
-			 purity &= (Boolean) elem.accept(this, env);
+			purity &= (Boolean) elem.accept(this, env);
 		}
 		return purity;
 	}
@@ -209,18 +189,10 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 
 		boolean purity = true;
 		for (Exp exp : operands) {
-			purity  &= (Boolean) exp.accept(this, env); 
+			purity &= (Boolean) exp.accept(this, env);
 		}
 
 		return purity;
-	}
-
-	private static boolean assignable(Type t1, Type t2) {
-		if (t2 instanceof UnitT) {
-			return true;
-		}
-
-		return t1.typeEqual(t2);
 	}
 
 	public Boolean visit(ReadExp e, Env<Type> env) {
