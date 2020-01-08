@@ -24,25 +24,11 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 	}
 
 	public Boolean visit(Program p, Env<Type> env) {
-		Env<Type> new_env = env;
-
+		boolean purity = true; 
 		for (DefineDecl d : p.decls()) {
-			Type type = (Type) d.accept(this, new_env);
-
-			if (type instanceof ErrorT) {
-				return type;
-			}
-
-			Type dType = d.type();
-
-			if (!type.typeEqual(dType)) {
-				return new ErrorT(
-						"Expected " + dType.tostring() + " found " + type.tostring() + " in " + ts.visit(d, null));
-			}
-
-			new_env = new ExtendEnv<Type>(new_env, d.name(), dType);
+			purity = purity && (Boolean) d.accept(this, env);
 		}
-		return (Type) p.e().accept(this, new_env);
+		return purity;
 	}
 
 	public Boolean visit(VarExp e, Env<Type> env) {
