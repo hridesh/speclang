@@ -11,6 +11,7 @@ import speclang.Type.*;
 
 public class Checker implements Visitor<Type, Env<Type>> {
 	Printer.Formatter ts = new Printer.Formatter();
+	PurityChecker pc = new PurityChecker();  //New for SpecLang
 
 	Type check(Program p) {
 		return (Type) p.accept(this, null);
@@ -99,9 +100,16 @@ public class Checker implements Visitor<Type, Env<Type>> {
 			}
 
 			Type bodyType = (Type) e.body().accept(this, new_env);
-
 			if (bodyType instanceof ErrorT) {
 				return bodyType;
+			}
+			
+			//New for SpecLang - Check specifications
+			Env<Type> spec_env = new ExtendEnv<Type>(new_env,"result", bodyType);
+			Type specType = (Type) e.spec().accept(this, spec_env);
+
+			if (specType instanceof ErrorT) {
+				return specType;
 			}
 
 			// create a new function type with arguments, and the type of
@@ -560,6 +568,10 @@ public class Checker implements Visitor<Type, Env<Type>> {
 			if (!(precond_type instanceof BoolT)) 
 				return new ErrorT("The precondition expects a boolean type " + "found " + precond_type.tostring() + " in "
 						+ ts.visit(e, null));
+			boolean purity = (Boolean) precondition.accept(pc, env);
+			if(!purity) 
+				return new ErrorT("The precondition must be a pure expression " + "found " + precondition.accept(ts, null) + " in "
+						+ ts.visit(e, null));
 		}
 		for (Exp postcondition : e.postconditions()) {
 			Type postcond_type = (Type) postcondition.accept(this, env);
@@ -567,6 +579,10 @@ public class Checker implements Visitor<Type, Env<Type>> {
 				return postcond_type;
 			if (!(postcond_type instanceof BoolT))
 				return new ErrorT("The postcondition expects a boolean type " + "found " + postcond_type.tostring() + " in "
+						+ ts.visit(e, null));
+			boolean purity = (Boolean) postcondition.accept(pc, env);
+			if(!purity) 
+				return new ErrorT("The postcondition must be a pure expression " + "found " + postcondition.accept(ts, null) + " in "
 						+ ts.visit(e, null));
 		}
 		return UnitT.getInstance();
