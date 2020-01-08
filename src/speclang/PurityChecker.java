@@ -24,7 +24,7 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 		for (DefineDecl d : p.decls()) {
 			purity = purity && (Boolean) d.accept(this, env);
 		}
-		return purity;
+		return purity && (Boolean) p._e.accept(this, env);
 	}
 
 	public Boolean visit(VarExp e, Env<Type> env) {
@@ -264,8 +264,8 @@ public class PurityChecker implements Visitor<Boolean, Env<Type>> {
 	}
 
 	public static void main(String[] args) {
-		System.out.println("TypeLang: Type a program to check its purity press the enter key,\n"
-				+ "e.g. ((lambda (x: num y: num z : num) (+ x (+ y z))) 1 2 3) \n" + "or try (let ((x : num 2)) x) \n"
+		System.out.println("SpecLang: Type a program to check its purity press the enter key,\n"
+				+ "e.g. (> (deref x) (set! x 0)) \n" + "or try  (> result 7) \n"
 				+ "or try (car (list : num  1 2 8)) \n" + "or try (ref : num 2) \n"
 				+ "or try  (let ((a : Ref num (ref : num 2))) (set! a (deref a))) \n" + "Press Ctrl + C to exit.");
 		Reader reader = new Reader();
