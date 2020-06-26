@@ -9,14 +9,14 @@ import speclang.Env.ExtendEnv;
 import speclang.Type.ErrorT;
 import speclang.Type.*;
 
-public class Checker implements Visitor<Type, Env<Type>> {
+public class Checker implements Visitor<Type, Type> {
 	Printer.Formatter ts = new Printer.Formatter();
 	PurityChecker pc = new PurityChecker();  //New for SpecLang
 
 	Type check(Program p) {
 		return (Type) p.accept(this, null);
 	}
-
+	
 	public Type visit(Program p, Env<Type> env) {
 		Env<Type> new_env = env;
 

@@ -12,7 +12,7 @@ import speclang.AST.*;
  *
  */
 
-public class PurityChecker implements Visitor<Boolean, Env<Type>> {
+public class PurityChecker implements Visitor<Boolean, Type> {
 	Printer.Formatter ts = new Printer.Formatter();
 
 	Boolean check(Program p) {

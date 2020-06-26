@@ -20,7 +20,11 @@ public class Printer {
 		System.out.println(e.toString());
 	}
 
-	public static class Formatter implements AST.Visitor<String, Env<Void>> {
+	public static class Formatter implements AST.Visitor<String, Void> {
+		
+		public String format(AST.ASTNode n, Env<Void> env) {
+			return n.accept(this, env);
+		}
 
 		public String visit(AST.AddExp e, Env<Void> env) {
 			String result = "(+ ";

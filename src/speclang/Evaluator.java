@@ -13,7 +13,7 @@ import speclang.AST.Exp;
 import speclang.AST.FuncSpec;
 import speclang.Env.*;
 
-public class Evaluator implements Visitor<Value, Env<Value>> {
+public class Evaluator implements Visitor<Value, Value> {
 
 	private final Printer.Formatter ts = new Printer.Formatter();
 

@@ -59,10 +59,10 @@ public interface Value {
 				result += formal + " ";
 			if(_spec != null) {
 				result += "| ";
-				result += _spec.accept(new Printer.Formatter(), _env);
+				result += _spec.accept(new Printer.Formatter(), new Env.EmptyEnv<Void>());
 			}
 			result += ") ";
-			result += _body.accept(new Printer.Formatter(), _env);
+			result += _body.accept(new Printer.Formatter(), new Env.EmptyEnv<Void>());
 			return result + ")";
 		}
 	}
