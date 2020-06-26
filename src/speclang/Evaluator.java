@@ -15,11 +15,11 @@ import speclang.Env.*;
 
 public class Evaluator implements Visitor<Value, Env<Value>> {
 
-	Printer.Formatter ts = new Printer.Formatter();
+	private final Printer.Formatter ts = new Printer.Formatter();
 
-	Env<Value> initEnv = initialEnv(); // New for definelang
+	private volatile Env<Value> initEnv = initialEnv();
 
-	Heap heap = null; // New for typelang
+	Heap heap = null;
 
 	Value valueOf(Program p) {
 		heap = new Heap16Bit();
@@ -31,10 +31,8 @@ public class Evaluator implements Visitor<Value, Env<Value>> {
 		List<Exp> operands = e.all();
 		int result = 0;
 		for (Exp exp : operands) {
-			NumVal intermediate = (NumVal) exp.accept(this, env); // Dynamic
-			// type-checking
-			result += intermediate.v(); // Semantics of AddExp in terms of the
-			// target language.
+			NumVal intermediate = (NumVal) exp.accept(this, env);
+			result += intermediate.v();
 		}
 		return new NumVal(result);
 	}
