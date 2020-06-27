@@ -399,11 +399,19 @@ public class Checker implements Visitor<Type, Type> {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
+	public Type visit(LessEqExp e, Env<Type> env) {
+		return visitBinaryComparator(e, env, ts.visit(e, null));
+	}
+
 	public Type visit(EqualExp e, Env<Type> env) {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
 	public Type visit(GreaterExp e, Env<Type> env) {
+		return visitBinaryComparator(e, env, ts.visit(e, null));
+	}
+
+	public Type visit(GreaterEqExp e, Env<Type> env) {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 

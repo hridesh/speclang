@@ -35,8 +35,10 @@ grammar SpecLang;
     	| call=callexp { $ast = $call.ast; }
     	| i=ifexp { $ast = $i.ast; }
     	| less=lessexp { $ast = $less.ast; }
+    	| lesseq=lesseqexp { $ast = $lesseq.ast; }
     	| eq=equalexp { $ast = $eq.ast; }
     	| gt=greaterexp { $ast = $gt.ast; }
+    	| gteq=greatereqexp { $ast = $gteq.ast; }
     	| car=carexp { $ast = $car.ast; }
     	| cdr=cdrexp { $ast = $cdr.ast; }
     	| cons=consexp { $ast = $cons.ast; }
@@ -198,6 +200,13 @@ unittype returns [UnitT ty] :
  		')' { $ast = new LessExp($e1.ast,$e2.ast); }
  		;
 
+ lesseqexp returns [LessEqExp ast] :
+ 		'(' LessEq 
+ 		    e1=exp 
+ 			e2=exp 
+ 		')' { $ast = new LessEqExp($e1.ast,$e2.ast); }
+ 		;
+
  equalexp returns [EqualExp ast] :
  		'(' Equal 
  		    e1=exp 
@@ -210,6 +219,13 @@ unittype returns [UnitT ty] :
  		    e1=exp 
  			e2=exp 
  		')' { $ast = new GreaterExp($e1.ast,$e2.ast); }
+ 		;
+ 		
+ greatereqexp returns [GreaterEqExp ast] :
+ 		'(' GreaterEq 
+ 		    e1=exp 
+ 			e2=exp 
+ 		')' { $ast = new GreaterEqExp($e1.ast,$e2.ast); }
  		;
 
  // Predicates for each type of value
@@ -379,8 +395,10 @@ unittype returns [UnitT ty] :
  List : 'list' ; 
  Null : 'null?' ; 
  Less : '<' ;
+ LessEq : '<=' ;
  Equal : '=' ;
  Greater : '>' ;
+ GreaterEq : '>=' ;
  TrueLiteral : '#t' ;
  FalseLiteral : '#f' ;
  Ref : 'ref' ;

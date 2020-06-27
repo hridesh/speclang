@@ -146,6 +146,13 @@ public class Printer {
 			return result + ")";
 		}
 
+		public String visit(AST.LessEqExp e, Env<Void> env) {
+			String result = "(<= ";
+			result += e.first_exp().accept(this, env) + " ";
+			result += e.second_exp().accept(this, env);
+			return result + ")";
+		}
+
 		public String visit(AST.EqualExp e, Env<Void> env) {
 			String result = "(= ";
 			result += e.first_exp().accept(this, env) + " ";
@@ -155,6 +162,13 @@ public class Printer {
 
 		public String visit(AST.GreaterExp e, Env<Void> env) {
 			String result = "(> ";
+			result += e.first_exp().accept(this, env) + " ";
+			result += e.second_exp().accept(this, env);
+			return result + ")";
+		}
+
+		public String visit(AST.GreaterEqExp e, Env<Void> env) {
+			String result = "(>= ";
 			result += e.first_exp().accept(this, env) + " ";
 			result += e.second_exp().accept(this, env);
 			return result + ")";

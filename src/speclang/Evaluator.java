@@ -213,24 +213,38 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(LessExp e, Env<Value> env) { // New for funclang.
+	public Value visit(LessExp e, Env<Value> env) { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() < second.v());
 	}
 
 	@Override
-	public Value visit(EqualExp e, Env<Value> env) { // New for funclang.
+	public Value visit(LessEqExp e, Env<Value> env) {
+		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
+		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
+		return new Value.BoolVal(first.v() <= second.v());
+	}
+
+	@Override
+	public Value visit(EqualExp e, Env<Value> env) { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() == second.v());
 	}
 
 	@Override
-	public Value visit(GreaterExp e, Env<Value> env) { // New for funclang.
+	public Value visit(GreaterExp e, Env<Value> env) { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() > second.v());
+	}
+
+	@Override
+	public Value visit(GreaterEqExp e, Env<Value> env) { 
+		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
+		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
+		return new Value.BoolVal(first.v() >= second.v());
 	}
 
 	@Override

@@ -452,6 +452,24 @@ public interface AST {
 		}
 	}
 
+	/**
+	 * A lesseq expression has the syntax
+	 * 
+	 * ( <= first_expression second_expression )
+	 * 
+	 * @author hridesh
+	 *
+	 */
+	public static class LessEqExp extends BinaryComparator {
+		public LessEqExp(Exp first_exp, Exp second_exp) {
+			super(first_exp, second_exp);
+		}
+
+		public <T,U> T accept(Visitor<T,U> visitor, Env<U> env) {
+			return visitor.visit(this, env);
+		}
+	}
+
 	public static abstract class BinaryComparator extends Exp {
 		private Exp _first_exp;
 		private Exp _second_exp;
@@ -498,6 +516,24 @@ public interface AST {
 	 */
 	public static class GreaterExp extends BinaryComparator {
 		public GreaterExp(Exp first_exp, Exp second_exp) {
+			super(first_exp, second_exp);
+		}
+
+		public <T,U> T accept(Visitor<T,U> visitor, Env<U> env) {
+			return visitor.visit(this, env);
+		}
+	}
+
+	/**
+	 * A greatereq expression has the syntax
+	 * 
+	 * ( >= first_expression second_expression )
+	 * 
+	 * @author hridesh
+	 *
+	 */
+	public static class GreaterEqExp extends BinaryComparator {
+		public GreaterEqExp(Exp first_exp, Exp second_exp) {
 			super(first_exp, second_exp);
 		}
 
@@ -1025,8 +1061,10 @@ public interface AST {
 		public T visit(AST.LetrecExp e, Env<U> env);
 		public T visit(AST.IfExp e, Env<U> env);
 		public T visit(AST.LessExp e, Env<U> env);
+		public T visit(AST.LessEqExp e, Env<U> env);
 		public T visit(AST.EqualExp e, Env<U> env);
 		public T visit(AST.GreaterExp e, Env<U> env);
+		public T visit(AST.GreaterEqExp e, Env<U> env);
 		public T visit(AST.CarExp e, Env<U> env);
 		public T visit(AST.CdrExp e, Env<U> env);
 		public T visit(AST.ConsExp e, Env<U> env);

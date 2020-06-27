@@ -149,11 +149,19 @@ public class PurityChecker implements Visitor<Boolean, Type> {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
+	public Boolean visit(LessEqExp e, Env<Type> env) {
+		return visitBinaryComparator(e, env, ts.visit(e, null));
+	}
+
 	public Boolean visit(EqualExp e, Env<Type> env) {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
 	public Boolean visit(GreaterExp e, Env<Type> env) {
+		return visitBinaryComparator(e, env, ts.visit(e, null));
+	}
+
+	public Boolean visit(GreaterEqExp e, Env<Type> env) {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
