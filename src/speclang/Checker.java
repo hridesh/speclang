@@ -16,7 +16,7 @@ public class Checker implements Visitor<Type, Type> {
 	Type check(Program p) {
 		return (Type) p.accept(this, null);
 	}
-	
+
 	public Type visit(Program p, Env<Type> env) {
 		Env<Type> new_env = env;
 
@@ -103,7 +103,7 @@ public class Checker implements Visitor<Type, Type> {
 			if (bodyType instanceof ErrorT) {
 				return bodyType;
 			}
-			
+
 			//New for SpecLang - Check specifications
 			Env<Type> spec_env = new ExtendEnv<Type>(new_env,"result", bodyType);
 			Type specType = (Type) e.spec().accept(this, spec_env);
