@@ -12,6 +12,7 @@ import java.io.IOException;
 import speclang.AST.Exp;
 import speclang.AST.FuncSpec;
 import speclang.Env.*;
+import speclang.Value.NumVal;
 
 public class Evaluator implements Visitor<Value, Value> {
 
@@ -165,11 +166,12 @@ public class Evaluator implements Visitor<Value, Value> {
 
 		// Runtime verification of specifications.
 		// First check the precondition
-		Value.BoolVal precondition = (Value.BoolVal) operator.spec().accept(this, fun_env);
-		if (precondition.v()) { //Precondition is true
+		Value.NumVal speccase = (Value.NumVal) operator.spec().accept(this, fun_env);
+		if (speccase.v()>=0) { //Precondition for at least one of the specification cases is true
 			Value fresult = (Value) operator.body().accept(this, fun_env); 
 			//Create a new environment to check postconditions that has the result of the function.
 			Env<Value> post_env = new ExtendEnv<>(fun_env, "result", fresult);
+			post_env = new ExtendEnv<>(post_env, "speccase", speccase);
 			Value.BoolVal postcondition = (Value.BoolVal) operator.spec().accept(this, post_env);
 			if (postcondition.v()) // Postcondition is true
 				return fresult;
@@ -402,6 +404,29 @@ public class Evaluator implements Visitor<Value, Value> {
 
 	@Override
 	public Value visit(FuncSpec s, Env<Value> env) {
+		try { // Are we checking preconditions or postconditions?
+			env.get("result"); // result of function
+			Value.NumVal speccase = (NumVal) env.get("speccase");
+			List<SpecCase> speccases = s.speccases();
+			Value speccase_value = speccases.get((int) speccase.v()).accept(this, env);
+			if (!(speccase_value instanceof Value.BoolVal))
+				return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
+			return speccase_value;
+		} catch (LookupException e) { // Identify which specification case holds?
+			List<SpecCase> speccases = s.speccases();
+			for(int i=0; i< speccases.size(); i++) {
+				Value speccase_value = speccases.get(i).accept(this, env);
+				if (!(speccase_value instanceof Value.BoolVal))
+					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
+				Value.BoolVal condition = (Value.BoolVal) speccase_value;
+				if (condition.v()) return new Value.NumVal(i);
+			}			
+			return new Value.NumVal(-1);
+		}
+	}
+
+	@Override
+	public Value visit(SpecCase s, Env<Value> env) {
 		// Are we checking preconditions or postconditions?
 		try {
 			env.get("result"); // result of function
