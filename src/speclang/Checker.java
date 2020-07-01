@@ -570,6 +570,15 @@ public class Checker implements Visitor<Type, Type> {
 
 	@Override
 	public Type visit(FuncSpec e, Env<Type> env) {
+		for (SpecCase speccase: e.speccases()) {
+			Type spcasetype = speccase.accept(this, env); 
+			if(spcasetype instanceof ErrorT) return spcasetype;
+		}		
+		return UnitT.getInstance();
+	}
+
+	@Override
+	public Type visit(SpecCase e, Env<Type> env) {
 		for (Exp precondition : e.preconditions()) {
 			Type precond_type = (Type) precondition.accept(this, env);
 			if (precond_type instanceof ErrorT) 
@@ -596,7 +605,7 @@ public class Checker implements Visitor<Type, Type> {
 		}
 		return UnitT.getInstance();
 	}
-
+	
 	public static void main(String[] args) {
 		System.out.println("TypeLang: Type a program to check and press the enter key,\n"
 				+ "e.g. ((lambda (x: num y: num z : num) (+ x (+ y z))) 1 2 3) \n" + "or try (let ((x : num 2)) x) \n"
