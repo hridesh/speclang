@@ -262,6 +262,15 @@ public class PurityChecker implements Visitor<Boolean, Type> {
 	@Override
 	public Boolean visit(FuncSpec e, Env<Type> env) {
 		Boolean purity = true;
+		for (AST.SpecCase speccase : e.speccases()) {
+			purity = purity && (Boolean) speccase.accept(this, env);
+		}
+		return purity;
+	}
+
+	@Override
+	public Boolean visit(SpecCase e, Env<Type> env) {
+		Boolean purity = true;
 		for (Exp precondition : e.preconditions()) {
 			purity = purity && (Boolean) precondition.accept(this, env);
 		}
