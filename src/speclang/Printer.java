@@ -304,6 +304,16 @@ public class Printer {
 
 		public String visit(AST.FuncSpec e, Env<Void> env) {
 			String result = "";
+			List<AST.SpecCase> speccases = e.speccases();
+			for(int i=0; i < speccases.size(); i++)
+				if(i<speccases.size()-1)
+					result += speccases.get(i).accept(this, env) + "||";
+				else result += speccases.get(i).accept(this, env) + " ";
+			return result;
+		}
+	
+		public String visit(AST.SpecCase e, Env<Void> env) {
+			String result = "";
 			for (Exp precondition : e.preconditions())
 				result += precondition.accept(this, env) + " ";
 			result += "->";
@@ -311,6 +321,5 @@ public class Printer {
 				result += postcondition.accept(this, env) + " ";
 			return result;
 		}
-	
 	}
 }
