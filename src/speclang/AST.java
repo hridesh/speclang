@@ -1007,12 +1007,12 @@ public interface AST {
 
 	public static abstract class Spec extends ASTNode {
 	}
-
-	public static class FuncSpec extends Spec {
+	
+	public static class SpecCase extends Spec {
 		private List<Exp> preconditions;
 		private List<Exp> postconditions;
 
-		public FuncSpec(List<Exp> preconditions, List<Exp> postconditions) {
+		public SpecCase(List<Exp> preconditions, List<Exp> postconditions) {
 			this.preconditions = preconditions;
 			this.postconditions = postconditions;
 		}
@@ -1023,6 +1023,24 @@ public interface AST {
 
 		public List<Exp> postconditions() {
 			return this.postconditions;
+		}
+		
+		@Override
+		public <T,U> T accept(Visitor<T,U> visitor, Env<U> env) {
+			return visitor.visit(this, env);
+		}
+
+	}
+
+	public static class FuncSpec extends Spec {
+		private List<SpecCase> cases;
+
+		public FuncSpec(List<SpecCase> cases) {
+			this.cases = cases;
+		}
+
+		public List<SpecCase> speccases() {
+			return this.cases;
 		}
 
 		@Override
@@ -1036,7 +1054,10 @@ public interface AST {
 			List<Exp> postconds = new ArrayList<Exp>(); 
 			preconds.add(new BoolExp(true));
 			postconds.add(new BoolExp(true));
-			defaultspec = new FuncSpec(preconds, postconds);
+			SpecCase speccase = new SpecCase(preconds, postconds);
+			List<SpecCase> speccases = new ArrayList<SpecCase>();
+			speccases.add(speccase);
+			defaultspec = new FuncSpec(speccases);
 		}
 	}
 
@@ -1083,6 +1104,6 @@ public interface AST {
 		public T visit(AST.AssignExp e, Env<U> env);
 		public T visit(AST.FreeExp e, Env<U> env);
 		public T visit(AST.FuncSpec s, Env<U> env);
-
+		public T visit(AST.SpecCase s, Env<U> env);
 	}
 }
