@@ -64,12 +64,20 @@ spec returns [Spec ast]:
         ;
         
 funspec returns [FuncSpec sp]
+        locals [ArrayList<SpecCase> speccases] 
+        @init { $speccases = new ArrayList<SpecCase>(); } :
+        speccase1=speccase { $speccases.add($speccase1.ast); }
+        ( '||'  speccase2=speccase { $speccases.add($speccase2.ast); } )*
+ 		{ $sp = new FuncSpec($speccases); }
+        ;
+
+speccase returns [SpecCase ast]
         locals [ArrayList<Exp> preconditions, ArrayList<Exp> postconditions] 
         @init { $preconditions = new ArrayList<Exp>(); $postconditions = new ArrayList<Exp>(); } :                
  			( pre1=exp {  $preconditions.add($pre1.ast); } )* 
  			'->' 
  			( post1=exp {  $postconditions.add($post1.ast); } )* 
- 		{ $sp = new FuncSpec($preconditions, $postconditions); }
+ 		{ $ast = new SpecCase($preconditions, $postconditions); }
  		;
         
  
