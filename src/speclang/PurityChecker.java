@@ -146,26 +146,26 @@ public class PurityChecker implements Visitor<Boolean, Type> {
 	}
 
 	public Boolean visit(LessExp e, Env<Type> env) {
-		return visitBinaryComparator(e, env, ts.visit(e, null));
+		return visitBinaryComparator(e, env);
 	}
 
 	public Boolean visit(LessEqExp e, Env<Type> env) {
-		return visitBinaryComparator(e, env, ts.visit(e, null));
+		return visitBinaryComparator(e, env);
 	}
 
 	public Boolean visit(EqualExp e, Env<Type> env) {
-		return visitBinaryComparator(e, env, ts.visit(e, null));
+		return visitBinaryComparator(e, env);
 	}
 
 	public Boolean visit(GreaterExp e, Env<Type> env) {
-		return visitBinaryComparator(e, env, ts.visit(e, null));
+		return visitBinaryComparator(e, env);
 	}
 
 	public Boolean visit(GreaterEqExp e, Env<Type> env) {
-		return visitBinaryComparator(e, env, ts.visit(e, null));
+		return visitBinaryComparator(e, env);
 	}
 
-	private Boolean visitBinaryComparator(BinaryComparator e, Env<Type> env, String printNode) {
+	private Boolean visitBinaryComparator(BinaryComparator e, Env<Type> env) {
 		Exp first_exp = e.first_exp();
 		Exp second_exp = e.second_exp();
 
@@ -173,26 +173,26 @@ public class PurityChecker implements Visitor<Boolean, Type> {
 	}
 
 	public Boolean visit(AddExp e, Env<Type> env) {
-		return visitCompoundArithExp(e, env, ts.visit(e, null));
+		return visitCompoundArithExp(e, env);
 	}
 
 	public Boolean visit(DivExp e, Env<Type> env) {
-		return visitCompoundArithExp(e, env, ts.visit(e, null));
+		return visitCompoundArithExp(e, env);
 	}
 
 	public Boolean visit(MultExp e, Env<Type> env) {
-		return visitCompoundArithExp(e, env, ts.visit(e, null));
+		return visitCompoundArithExp(e, env);
 	}
 
 	public Boolean visit(SubExp e, Env<Type> env) {
-		return visitCompoundArithExp(e, env, ts.visit(e, null));
+		return visitCompoundArithExp(e, env);
 	}
 
 	public Boolean visit(ErrorExp e, Env<Type> env) {
 		return true;
 	}
 
-	private Boolean visitCompoundArithExp(CompoundArithExp e, Env<Type> env, String printNode) {
+	private Boolean visitCompoundArithExp(CompoundArithExp e, Env<Type> env) {
 		List<Exp> operands = e.all();
 
 		boolean purity = true;
