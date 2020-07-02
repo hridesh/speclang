@@ -13,10 +13,11 @@ import speclang.AST.*;
  */
 public class Interpreter {
 	public static void main(String[] args) {
-		System.out.println("TypeLang: Type a program to evaluate and press the enter key,\n"
-				+ "e.g. ((lambda (x: num y: num z : num) (+ x (+ y z))) 1 2 3) \n" + "or try (let ((x : num 2)) x) \n"
-				+ "or try (car (list : num  1 2 8)) \n" + "or try (ref : num 2) \n"
-				+ "or try  (let ((a : Ref num (ref : num 2))) (set! a (deref a))) \n" + "Press Ctrl + C to exit.");
+		System.out.println("SpecLang: Type a program to evaluate and press the enter key,\n"
+				+ "e.g. ((lambda (x: num | #t -> #t) (+ 3 (+ 4 x))) 2) \n" 
+				+ "or try ((lambda (x: num | (> x 0) -> #t) (+ 3 (+ 4 x))) 2) \n"
+				+ "or try ((lambda (x: num | (> x 3) -> #t) (+ 3 (+ 4 x))) 2) \n"
+				+ "or try ((lambda (x: num | (> x 0) -> (= result 342)) (+ 3 (+ 4 x))) 2) \n" + "Press Ctrl + C to exit.");
 		Reader reader = new Reader();
 		Evaluator eval = new Evaluator(reader);
 		Printer printer = new Printer();
