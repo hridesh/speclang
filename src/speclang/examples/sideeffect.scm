@@ -1,4 +1,4 @@
-// This example contains a contract that has side-effects.
+// This example contains a specification that has side-effects.
  (let 
  	((f: (Ref num -> num)
  		(lambda 
