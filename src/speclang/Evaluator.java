@@ -146,7 +146,7 @@ public class Evaluator implements Visitor<Value, Value> {
 	public Value visit(CallExp e, Env<Value> env) { // New for funclang.
 		Object result = e.operator().accept(this, env);
 		if (!(result instanceof Value.FunVal))
-			return new Value.DynamicError("Operator not a function in call " + ts.visit(e, null));
+			return error("Operator not a function in call", e);
 		Value.FunVal operator = (Value.FunVal) result; // Dynamic checking
 		List<Exp> operands = e.operands();
 
@@ -157,7 +157,7 @@ public class Evaluator implements Visitor<Value, Value> {
 
 		List<String> formals = operator.formals();
 		if (formals.size() != actuals.size())
-			return new Value.DynamicError("Argument mismatch in call " + ts.visit(e, null));
+			return error("Argument mismatch in call", e);
 
 		Env<Value> closure_env = operator.env();
 		Env<Value> fun_env = appendEnv(closure_env, initEnv);
@@ -166,21 +166,22 @@ public class Evaluator implements Visitor<Value, Value> {
 
 		// Runtime verification of specifications.
 		// First check the precondition
-		Value.NumVal speccase = (Value.NumVal) operator.spec().accept(this, fun_env);
-		if (speccase.v()>=0) { //Precondition for at least one of the specification cases is true
-			Value fresult = (Value) operator.body().accept(this, fun_env); 
-			//Create a new environment to check postconditions that has the result of the function.
-			Env<Value> post_env = new ExtendEnv<>(fun_env, "result", fresult);
-			post_env = new ExtendEnv<>(post_env, "speccase", speccase);
-			Value.BoolVal postcondition = (Value.BoolVal) operator.spec().accept(this, post_env);
-			if (postcondition.v()) // Postcondition is true
-				return fresult;
-			return new Value.DynamicError("Postcondition violation in call " + ts.visit(e, null));
-		}
-		return new Value.DynamicError("Precondition violation in call " + ts.visit(e, null));
+		FuncSpec spec = (FuncSpec)operator.spec(); 
+		int speccase = (int)((Value.NumVal) evalSpecCases(spec, fun_env)).v();
+		if (speccase < 0) //No precondition holds
+			return error("Precondition violation in call", e);
+		// Evaluate the function body
+		Value fresult = (Value) operator.body().accept(this, fun_env); 
+		// Create a new environment to check postconditions that has the result of the function
+		Env<Value> post_env = new ExtendEnv<>(fun_env, "result", fresult);
+		SpecCase post = spec.speccases().get(speccase);
+		Value.BoolVal postcondition = (Value.BoolVal) evalPostConditions(post, post_env);
+		if (postcondition.v()) // Postcondition is true
+			return fresult;
+		return error("Postcondition violation in call", e);
 	}
 
-	/* Helper for CallExp */
+	/* Helpers for CallExp */
 	/***
 	 * Create an env that has bindings from fst appended to bindings from snd. The
 	 * order of bindings is bindings from fst followed by that from snd.
@@ -199,7 +200,54 @@ public class Evaluator implements Visitor<Value, Value> {
 		ExtendEnvRec f = (ExtendEnvRec) fst;
 		return new ExtendEnvRec(appendEnv(f.saved_env(), snd), f.names(), f.vals());
 	}
-	/* End: helper for CallExp */
+	
+	private Value evalSpecCases(FuncSpec s, Env<Value> env) {
+		List<SpecCase> speccases = s.speccases();
+		for(int i=0; i< speccases.size(); i++) {
+			Value speccase_value = evalPreConditions(speccases.get(i), env);
+			if (!(speccase_value instanceof Value.BoolVal))
+				return error("Condition not a boolean in expression", s);
+			Value.BoolVal condition = (Value.BoolVal) speccase_value;
+			if (condition.v()) return new Value.NumVal(i);
+		}			
+		return new Value.NumVal(-1);
+	}
+	
+	private Value evalPreConditions(SpecCase s, Env<Value> env) {
+		for (Exp precondition : s.preconditions()) {
+			Value precond_value = precondition.accept(this, env);
+			if (!(precond_value instanceof Value.BoolVal))
+				return error("Condition not a boolean in expression", s);
+			Value.BoolVal condition = (Value.BoolVal) precond_value;
+			if (!condition.v()) return condition;
+		}
+		return new Value.BoolVal(true);
+	}
+	
+	private Value evalPostConditions(SpecCase s, Env<Value> env) {
+		for (Exp postcondition : s.postconditions()) {
+			Value postcond_value = postcondition.accept(this, env);
+			if (!(postcond_value instanceof Value.BoolVal))
+				return error("Condition not a boolean in expression", s);
+			Value.BoolVal condition = (Value.BoolVal) postcond_value;
+			if (!condition.v()) return condition;
+		}
+		return new Value.BoolVal(true);
+	}
+	
+	private Value error(String msg, CallExp n) {
+		return new Value.DynamicError(msg + " " + ts.visit(n, null));
+	}
+
+	private Value error(String msg, FuncSpec n) {
+		return new Value.DynamicError(msg + " " + ts.visit(n, null));
+	}
+
+	private Value error(String msg, SpecCase n) {
+		return new Value.DynamicError(msg + " " + ts.visit(n, null));
+	}
+	
+	/* End: helpers for CallExp */
 
 	@Override
 	public Value visit(IfExp e, Env<Value> env) { // New for funclang.
@@ -404,55 +452,12 @@ public class Evaluator implements Visitor<Value, Value> {
 
 	@Override
 	public Value visit(FuncSpec s, Env<Value> env) {
-		try { // Are we checking preconditions or postconditions?
-			env.get("result"); // result of function
-			Value.NumVal speccase = (NumVal) env.get("speccase");
-			List<SpecCase> speccases = s.speccases();
-			Value speccase_value = speccases.get((int) speccase.v()).accept(this, env);
-			if (!(speccase_value instanceof Value.BoolVal))
-				return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
-			return speccase_value;
-		} catch (LookupException e) { // Identify which specification case holds?
-			List<SpecCase> speccases = s.speccases();
-			for(int i=0; i< speccases.size(); i++) {
-				Value speccase_value = speccases.get(i).accept(this, env);
-				if (!(speccase_value instanceof Value.BoolVal))
-					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
-				Value.BoolVal condition = (Value.BoolVal) speccase_value;
-				if (condition.v()) return new Value.NumVal(i);
-			}			
-			return new Value.NumVal(-1);
-		}
+		return new Value.DynamicError("Specifications are used during evaluation of call expression " + ts.visit(s, null));
 	}
 
 	@Override
 	public Value visit(SpecCase s, Env<Value> env) {
-		// Are we checking preconditions or postconditions?
-		try {
-			env.get("result"); // result of function
-			// Check postconditions
-			for (Exp postcondition : s.postconditions()) {
-				Value postcond_value = postcondition.accept(this, env);
-				if (!(postcond_value instanceof Value.BoolVal))
-					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
-				Value.BoolVal condition = (Value.BoolVal) postcond_value;
-				if (!condition.v())
-					return condition;
-
-			}
-		} catch (LookupException e) {
-			// Check preconditions
-			for (Exp precondition : s.preconditions()) {
-				Value precond_value = precondition.accept(this, env);
-				if (!(precond_value instanceof Value.BoolVal))
-					return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(s, null));
-				Value.BoolVal condition = (Value.BoolVal) precond_value;
-				if (!condition.v())
-					return condition;
-
-			}
-		}
-		return new Value.BoolVal(true);
+		return new Value.DynamicError("Specification cases are used during evaluation of call expression " + ts.visit(s, null));
 	}
 
 	private Env<Value> initialEnv() {
