@@ -38,9 +38,11 @@ public class Interpreter {
 			} catch (Env.LookupException e) {
 				printer.print(e);
 			} catch (IOException e) {
-				System.out.println("Error reading input:" + e.getMessage());
+				System.out.println("Error reading input: " + e.getMessage());
 			} catch (NullPointerException e) {
-				System.out.println("Error:" + e.getMessage());
+				System.out.println("Error: " + e.getMessage());
+			} catch (ProgramError e) {
+				System.out.println("Error: " + e.getMessage());
 			}
 		}
 
