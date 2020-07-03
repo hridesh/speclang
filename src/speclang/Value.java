@@ -189,15 +189,4 @@ public interface Value {
 		}
 	}
 
-	static class DynamicError implements Value {
-		private String message = "Unknown dynamic error.";
-
-		public DynamicError(String message) {
-			this.message = message;
-		}
-
-		public String tostring() {
-			return "" + message;
-		}
-	}
 }
