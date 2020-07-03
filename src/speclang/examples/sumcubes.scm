@@ -1,6 +1,6 @@
 // Problem: specify sumcubes
 (define sumcubes : (num -> num)
-	(lambda (n : num | (>= n 0) -> (= result (/ (* n (+ n 1)) 2)))
+	(lambda (n : num | #t -> #t )
 		(if (= 0 n) n
 			(+ (* n n n) (sumcubes (- n 1)))
 		)		
