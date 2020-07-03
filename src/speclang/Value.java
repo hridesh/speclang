@@ -4,6 +4,7 @@ import java.util.List;
 
 import speclang.AST.Exp;
 import speclang.AST.Spec;
+import speclang.AST.ProgramError;
 
 public interface Value {
 	public String tostring();
@@ -59,10 +60,18 @@ public interface Value {
 				result += formal + " ";
 			if(_spec != null) {
 				result += "| ";
-				result += _spec.accept(new Printer.Formatter(), new Env.EmptyEnv<Void>());
+				try {
+					result += _spec.accept(new Printer.Formatter(), new Env.EmptyEnv<Void>());
+				} catch (ProgramError e) {
+					e.printStackTrace();
+				}
 			}
 			result += ") ";
-			result += _body.accept(new Printer.Formatter(), new Env.EmptyEnv<Void>());
+			try {
+				result += _body.accept(new Printer.Formatter(), new Env.EmptyEnv<Void>());
+			} catch (ProgramError e) {
+				e.printStackTrace();
+			}
 			return result + ")";
 		}
 	}
