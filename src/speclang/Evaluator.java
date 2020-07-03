@@ -72,7 +72,7 @@ public class Evaluator implements Visitor<Value, Value> {
 
 	@Override
 	public Value visit(ErrorExp e, Env<Value> env) throws ProgramError {
-		return new Value.DynamicError("Encountered an error expression");
+		throw new ProgramError("Encountered an error expression");
 	}
 
 	@Override
@@ -146,7 +146,7 @@ public class Evaluator implements Visitor<Value, Value> {
 	public Value visit(CallExp e, Env<Value> env) throws ProgramError { // New for funclang.
 		Object result = e.operator().accept(this, env);
 		if (!(result instanceof Value.FunVal))
-			return error("Operator not a function in call", e);
+			throw new ProgramError("Operator not a function in call" + ts.visit(e, null));
 		Value.FunVal operator = (Value.FunVal) result; // Dynamic checking
 		List<Exp> operands = e.operands();
 
@@ -157,7 +157,7 @@ public class Evaluator implements Visitor<Value, Value> {
 
 		List<String> formals = operator.formals();
 		if (formals.size() != actuals.size())
-			return error("Argument mismatch in call", e);
+			throw new ProgramError("Argument mismatch in call" + ts.visit(e, null));
 
 		Env<Value> closure_env = operator.env();
 		Env<Value> fun_env = appendEnv(closure_env, initEnv);
@@ -207,7 +207,7 @@ public class Evaluator implements Visitor<Value, Value> {
 		for(int i=0; i< speccases.size(); i++) {
 			Value speccase_value = evalPreConditions(speccases.get(i), env);
 			if (!(speccase_value instanceof Value.BoolVal))
-				return error("Condition not a boolean in expression", s);
+				throw new ProgramError("Condition not a boolean in expression" + ts.visit(s, null));
 			Value.BoolVal condition = (Value.BoolVal) speccase_value;
 			if (condition.v()) return new Value.NumVal(i);
 		}			
@@ -218,7 +218,7 @@ public class Evaluator implements Visitor<Value, Value> {
 		for (Exp precondition : s.preconditions()) {
 			Value precond_value = precondition.accept(this, env);
 			if (!(precond_value instanceof Value.BoolVal))
-				return error("Condition not a boolean in expression", s);
+				throw new ProgramError("Condition not a boolean in expression" + ts.visit(s, null));
 			Value.BoolVal condition = (Value.BoolVal) precond_value;
 			if (!condition.v()) return condition;
 		}
@@ -229,32 +229,20 @@ public class Evaluator implements Visitor<Value, Value> {
 		for (Exp postcondition : s.postconditions()) {
 			Value postcond_value = postcondition.accept(this, env);
 			if (!(postcond_value instanceof Value.BoolVal))
-				return error("Condition not a boolean in expression", s);
+				throw new ProgramError("Condition not a boolean in expression" + ts.visit(s, null));
 			Value.BoolVal condition = (Value.BoolVal) postcond_value;
 			if (!condition.v()) return condition;
 		}
 		return new Value.BoolVal(true);
 	}
 	
-	private Value error(String msg, CallExp n) throws ProgramError {
-		return new Value.DynamicError(msg + " " + ts.visit(n, null));
-	}
-
-	private Value error(String msg, FuncSpec n) throws ProgramError {
-		return new Value.DynamicError(msg + " " + ts.visit(n, null));
-	}
-
-	private Value error(String msg, SpecCase n) throws ProgramError {
-		return new Value.DynamicError(msg + " " + ts.visit(n, null));
-	}
-	
 	/* End: helpers for CallExp */
 
 	@Override
-	public Value visit(IfExp e, Env<Value> env) throws ProgramError { // New for funclang.
+	public Value visit(IfExp e, Env<Value> env) throws ProgramError {
 		Object result = e.conditional().accept(this, env);
 		if (!(result instanceof Value.BoolVal))
-			return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(e, null));
+			throw new ProgramError("Condition not a boolean in expression " + ts.visit(e, null));
 		Value.BoolVal condition = (Value.BoolVal) result; // Dynamic checking
 
 		if (condition.v())
@@ -318,7 +306,7 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(ListExp e, Env<Value> env) throws ProgramError { // New for funclang.
+	public Value visit(ListExp e, Env<Value> env) throws ProgramError {
 		List<Exp> elemExps = e.elems();
 		int length = elemExps.size();
 		if (length == 0)
@@ -353,12 +341,12 @@ public class Evaluator implements Visitor<Value, Value> {
 			String text = Reader.readFile("" + System.getProperty("user.dir") + File.separator + fileName.v());
 			return new StringVal(text);
 		} catch (IOException ex) {
-			return new DynamicError(ex.getMessage());
+			throw new ProgramError(ex.getMessage());
 		}
 	}
 
 	@Override
-	public Value visit(LetrecExp e, Env<Value> env) throws ProgramError { // New for reclang.
+	public Value visit(LetrecExp e, Env<Value> env) throws ProgramError {
 		List<String> names = e.names();
 		List<Exp> fun_exps = e.fun_exps();
 		List<Value.FunVal> funs = new ArrayList<Value.FunVal>(fun_exps.size());
@@ -453,12 +441,12 @@ public class Evaluator implements Visitor<Value, Value> {
 
 	@Override
 	public Value visit(FuncSpec s, Env<Value> env) throws ProgramError {
-		return new Value.DynamicError("Specifications are used during evaluation of call expression " + ts.visit(s, null));
+		throw new ProgramError("Specifications are used during evaluation of call expression " + ts.visit(s, null));
 	}
 
 	@Override
 	public Value visit(SpecCase s, Env<Value> env) throws ProgramError {
-		return new Value.DynamicError("Specification cases are used during evaluation of call expression " + ts.visit(s, null));
+		throw new ProgramError("Specification cases are used during evaluation of call expression " + ts.visit(s, null));
 	}
 
 	private Env<Value> initialEnv() {
