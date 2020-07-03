@@ -22,13 +22,13 @@ public class Evaluator implements Visitor<Value, Value> {
 
 	Heap heap = null;
 
-	Value valueOf(Program p) {
+	Value valueOf(Program p) throws ProgramError {
 		heap = new Heap16Bit();
 		return (Value) p.accept(this, initEnv);
 	}
 
 	@Override
-	public Value visit(AddExp e, Env<Value> env) {
+	public Value visit(AddExp e, Env<Value> env) throws ProgramError {
 		List<Exp> operands = e.all();
 		int result = 0;
 		for (Exp exp : operands) {
@@ -39,27 +39,27 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(UnitExp e, Env<Value> env) {
+	public Value visit(UnitExp e, Env<Value> env) throws ProgramError {
 		return new UnitVal();
 	}
 
 	@Override
-	public Value visit(NumExp e, Env<Value> env) {
+	public Value visit(NumExp e, Env<Value> env) throws ProgramError {
 		return new NumVal(e.v());
 	}
 
 	@Override
-	public Value visit(StrExp e, Env<Value> env) {
+	public Value visit(StrExp e, Env<Value> env) throws ProgramError {
 		return new StringVal(e.v());
 	}
 
 	@Override
-	public Value visit(BoolExp e, Env<Value> env) {
+	public Value visit(BoolExp e, Env<Value> env) throws ProgramError {
 		return new BoolVal(e.v());
 	}
 
 	@Override
-	public Value visit(DivExp e, Env<Value> env) {
+	public Value visit(DivExp e, Env<Value> env) throws ProgramError {
 		List<Exp> operands = e.all();
 		NumVal lVal = (NumVal) operands.get(0).accept(this, env);
 		double result = lVal.v();
@@ -71,12 +71,12 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(ErrorExp e, Env<Value> env) {
+	public Value visit(ErrorExp e, Env<Value> env) throws ProgramError {
 		return new Value.DynamicError("Encountered an error expression");
 	}
 
 	@Override
-	public Value visit(MultExp e, Env<Value> env) {
+	public Value visit(MultExp e, Env<Value> env) throws ProgramError {
 		List<Exp> operands = e.all();
 		double result = 1;
 		for (Exp exp : operands) {
@@ -88,14 +88,14 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(Program p, Env<Value> env) {
+	public Value visit(Program p, Env<Value> env) throws ProgramError {
 		for (DefineDecl d : p.decls())
 			d.accept(this, initEnv);
 		return (Value) p.e().accept(this, initEnv);
 	}
 
 	@Override
-	public Value visit(SubExp e, Env<Value> env) {
+	public Value visit(SubExp e, Env<Value> env) throws ProgramError {
 		List<Exp> operands = e.all();
 		NumVal lVal = (NumVal) operands.get(0).accept(this, env);
 		double result = lVal.v();
@@ -107,13 +107,13 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(VarExp e, Env<Value> env) {
+	public Value visit(VarExp e, Env<Value> env) throws ProgramError {
 		// Previously, all variables had value 42. New semantics.
 		return env.get(e.name());
 	}
 
 	@Override
-	public Value visit(LetExp e, Env<Value> env) { // New for varlang.
+	public Value visit(LetExp e, Env<Value> env) throws ProgramError { // New for varlang.
 		List<String> names = e.names();
 		List<Exp> value_exps = e.value_exps();
 		List<Value> values = new ArrayList<Value>(value_exps.size());
@@ -129,7 +129,7 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(DefineDecl e, Env<Value> env) { // New for definelang.
+	public Value visit(DefineDecl e, Env<Value> env) throws ProgramError { // New for definelang.
 		String name = e.name();
 		Exp value_exp = e.value_exp();
 		Value value = (Value) value_exp.accept(this, env);
@@ -138,12 +138,12 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(LambdaExp e, Env<Value> env) { // New for funclang.
+	public Value visit(LambdaExp e, Env<Value> env) throws ProgramError { // New for funclang.
 		return new Value.FunVal(env, e.formals(), e.spec(), e.body()); //Notice that function values also contain specifications now.
 	}
 
 	@Override
-	public Value visit(CallExp e, Env<Value> env) { // New for funclang.
+	public Value visit(CallExp e, Env<Value> env) throws ProgramError { // New for funclang.
 		Object result = e.operator().accept(this, env);
 		if (!(result instanceof Value.FunVal))
 			return error("Operator not a function in call", e);
@@ -169,7 +169,8 @@ public class Evaluator implements Visitor<Value, Value> {
 		FuncSpec spec = (FuncSpec)operator.spec(); 
 		int speccase = (int)((Value.NumVal) evalSpecCases(spec, fun_env)).v();
 		if (speccase < 0) //No precondition holds
-			return error("Precondition violation in call", e);
+			throw new ProgramError("Precondition violation in call:" + ts.visit(e, null));
+			// return error("Precondition violation in call", e);
 		// Evaluate the function body
 		Value fresult = (Value) operator.body().accept(this, fun_env); 
 		// Create a new environment to check postconditions that has the result of the function
@@ -178,7 +179,7 @@ public class Evaluator implements Visitor<Value, Value> {
 		Value.BoolVal postcondition = (Value.BoolVal) evalPostConditions(post, post_env);
 		if (postcondition.v()) // Postcondition is true
 			return fresult;
-		return error("Postcondition violation in call", e);
+		throw new ProgramError("Postcondition violation in call:" + ts.visit(e, null));
 	}
 
 	/* Helpers for CallExp */
@@ -201,7 +202,7 @@ public class Evaluator implements Visitor<Value, Value> {
 		return new ExtendEnvRec(appendEnv(f.saved_env(), snd), f.names(), f.vals());
 	}
 	
-	private Value evalSpecCases(FuncSpec s, Env<Value> env) {
+	private Value evalSpecCases(FuncSpec s, Env<Value> env) throws ProgramError {
 		List<SpecCase> speccases = s.speccases();
 		for(int i=0; i< speccases.size(); i++) {
 			Value speccase_value = evalPreConditions(speccases.get(i), env);
@@ -213,7 +214,7 @@ public class Evaluator implements Visitor<Value, Value> {
 		return new Value.NumVal(-1);
 	}
 	
-	private Value evalPreConditions(SpecCase s, Env<Value> env) {
+	private Value evalPreConditions(SpecCase s, Env<Value> env) throws ProgramError {
 		for (Exp precondition : s.preconditions()) {
 			Value precond_value = precondition.accept(this, env);
 			if (!(precond_value instanceof Value.BoolVal))
@@ -224,7 +225,7 @@ public class Evaluator implements Visitor<Value, Value> {
 		return new Value.BoolVal(true);
 	}
 	
-	private Value evalPostConditions(SpecCase s, Env<Value> env) {
+	private Value evalPostConditions(SpecCase s, Env<Value> env) throws ProgramError {
 		for (Exp postcondition : s.postconditions()) {
 			Value postcond_value = postcondition.accept(this, env);
 			if (!(postcond_value instanceof Value.BoolVal))
@@ -235,22 +236,22 @@ public class Evaluator implements Visitor<Value, Value> {
 		return new Value.BoolVal(true);
 	}
 	
-	private Value error(String msg, CallExp n) {
+	private Value error(String msg, CallExp n) throws ProgramError {
 		return new Value.DynamicError(msg + " " + ts.visit(n, null));
 	}
 
-	private Value error(String msg, FuncSpec n) {
+	private Value error(String msg, FuncSpec n) throws ProgramError {
 		return new Value.DynamicError(msg + " " + ts.visit(n, null));
 	}
 
-	private Value error(String msg, SpecCase n) {
+	private Value error(String msg, SpecCase n) throws ProgramError {
 		return new Value.DynamicError(msg + " " + ts.visit(n, null));
 	}
 	
 	/* End: helpers for CallExp */
 
 	@Override
-	public Value visit(IfExp e, Env<Value> env) { // New for funclang.
+	public Value visit(IfExp e, Env<Value> env) throws ProgramError { // New for funclang.
 		Object result = e.conditional().accept(this, env);
 		if (!(result instanceof Value.BoolVal))
 			return new Value.DynamicError("Condition not a boolean in expression " + ts.visit(e, null));
@@ -263,61 +264,61 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(LessExp e, Env<Value> env) { 
+	public Value visit(LessExp e, Env<Value> env) throws ProgramError { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() < second.v());
 	}
 
 	@Override
-	public Value visit(LessEqExp e, Env<Value> env) {
+	public Value visit(LessEqExp e, Env<Value> env) throws ProgramError {
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() <= second.v());
 	}
 
 	@Override
-	public Value visit(EqualExp e, Env<Value> env) { 
+	public Value visit(EqualExp e, Env<Value> env) throws ProgramError { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() == second.v());
 	}
 
 	@Override
-	public Value visit(GreaterExp e, Env<Value> env) { 
+	public Value visit(GreaterExp e, Env<Value> env) throws ProgramError { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() > second.v());
 	}
 
 	@Override
-	public Value visit(GreaterEqExp e, Env<Value> env) { 
+	public Value visit(GreaterEqExp e, Env<Value> env) throws ProgramError { 
 		Value.NumVal first = (Value.NumVal) e.first_exp().accept(this, env);
 		Value.NumVal second = (Value.NumVal) e.second_exp().accept(this, env);
 		return new Value.BoolVal(first.v() >= second.v());
 	}
 
 	@Override
-	public Value visit(CarExp e, Env<Value> env) {
+	public Value visit(CarExp e, Env<Value> env) throws ProgramError {
 		Value.PairVal pair = (Value.PairVal) e.arg().accept(this, env);
 		return pair.fst();
 	}
 
 	@Override
-	public Value visit(CdrExp e, Env<Value> env) {
+	public Value visit(CdrExp e, Env<Value> env) throws ProgramError {
 		Value.PairVal pair = (Value.PairVal) e.arg().accept(this, env);
 		return pair.snd();
 	}
 
 	@Override
-	public Value visit(ConsExp e, Env<Value> env) {
+	public Value visit(ConsExp e, Env<Value> env) throws ProgramError {
 		Value first = (Value) e.fst().accept(this, env);
 		Value second = (Value) e.snd().accept(this, env);
 		return new Value.PairVal(first, second);
 	}
 
 	@Override
-	public Value visit(ListExp e, Env<Value> env) { // New for funclang.
+	public Value visit(ListExp e, Env<Value> env) throws ProgramError { // New for funclang.
 		List<Exp> elemExps = e.elems();
 		int length = elemExps.size();
 		if (length == 0)
@@ -335,18 +336,18 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(NullExp e, Env<Value> env) {
+	public Value visit(NullExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.arg().accept(this, env);
 		return new BoolVal(val instanceof Value.Null);
 	}
 
-	public Value visit(EvalExp e, Env<Value> env) {
+	public Value visit(EvalExp e, Env<Value> env) throws ProgramError {
 		StringVal programText = (StringVal) e.code().accept(this, env);
 		Program p = _reader.parse(programText.v());
 		return (Value) p.accept(this, env);
 	}
 
-	public Value visit(ReadExp e, Env<Value> env) {
+	public Value visit(ReadExp e, Env<Value> env) throws ProgramError {
 		StringVal fileName = (StringVal) e.file().accept(this, env);
 		try {
 			String text = Reader.readFile("" + System.getProperty("user.dir") + File.separator + fileName.v());
@@ -357,7 +358,7 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(LetrecExp e, Env<Value> env) { // New for reclang.
+	public Value visit(LetrecExp e, Env<Value> env) throws ProgramError { // New for reclang.
 		List<String> names = e.names();
 		List<Exp> fun_exps = e.fun_exps();
 		List<Value.FunVal> funs = new ArrayList<Value.FunVal>(fun_exps.size());
@@ -370,69 +371,69 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(IsListExp e, Env<Value> env) {
+	public Value visit(IsListExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.PairVal && ((Value.PairVal) val).isList() || val instanceof Value.Null);
 	}
 
 	@Override
-	public Value visit(IsPairExp e, Env<Value> env) {
+	public Value visit(IsPairExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.PairVal);
 	}
 
 	@Override
-	public Value visit(IsUnitExp e, Env<Value> env) {
+	public Value visit(IsUnitExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.UnitVal);
 	}
 
 	@Override
-	public Value visit(IsProcedureExp e, Env<Value> env) {
+	public Value visit(IsProcedureExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.FunVal);
 	}
 
 	@Override
-	public Value visit(IsStringExp e, Env<Value> env) {
+	public Value visit(IsStringExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.StringVal);
 	}
 
 	@Override
-	public Value visit(IsNumberExp e, Env<Value> env) {
+	public Value visit(IsNumberExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.NumVal);
 	}
 
 	@Override
-	public Value visit(IsBooleanExp e, Env<Value> env) {
+	public Value visit(IsBooleanExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.BoolVal);
 	}
 
 	@Override
-	public Value visit(IsNullExp e, Env<Value> env) {
+	public Value visit(IsNullExp e, Env<Value> env) throws ProgramError {
 		Value val = (Value) e.exp().accept(this, env);
 		return new BoolVal(val instanceof Value.Null);
 	}
 
 	@Override
-	public Value visit(RefExp e, Env<Value> env) { // New for typelang.
+	public Value visit(RefExp e, Env<Value> env) throws ProgramError { // New for typelang.
 		Exp value_exp = e.value_exp();
 		Value value = (Value) value_exp.accept(this, env);
 		return heap.ref(value);
 	}
 
 	@Override
-	public Value visit(DerefExp e, Env<Value> env) { // New for typelang.
+	public Value visit(DerefExp e, Env<Value> env) throws ProgramError { // New for typelang.
 		Exp loc_exp = e.loc_exp();
 		Value.RefVal loc = (Value.RefVal) loc_exp.accept(this, env);
 		return heap.deref(loc);
 	}
 
 	@Override
-	public Value visit(AssignExp e, Env<Value> env) { // New for typelang.
+	public Value visit(AssignExp e, Env<Value> env) throws ProgramError { // New for typelang.
 		Exp rhs = e.rhs_exp();
 		Exp lhs = e.lhs_exp();
 		// Note the order of evaluation below.
@@ -443,7 +444,7 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(FreeExp e, Env<Value> env) { // New for typelang.
+	public Value visit(FreeExp e, Env<Value> env) throws ProgramError { // New for typelang.
 		Exp value_exp = e.value_exp();
 		Value.RefVal loc = (Value.RefVal) value_exp.accept(this, env);
 		heap.free(loc);
@@ -451,12 +452,12 @@ public class Evaluator implements Visitor<Value, Value> {
 	}
 
 	@Override
-	public Value visit(FuncSpec s, Env<Value> env) {
+	public Value visit(FuncSpec s, Env<Value> env) throws ProgramError {
 		return new Value.DynamicError("Specifications are used during evaluation of call expression " + ts.visit(s, null));
 	}
 
 	@Override
-	public Value visit(SpecCase s, Env<Value> env) {
+	public Value visit(SpecCase s, Env<Value> env) throws ProgramError {
 		return new Value.DynamicError("Specification cases are used during evaluation of call expression " + ts.visit(s, null));
 	}
 
