@@ -13,11 +13,11 @@ public class Checker implements Visitor<Type, Type> {
 	Printer.Formatter ts = new Printer.Formatter();
 	PurityChecker pc = new PurityChecker();  //New for SpecLang
 
-	Type check(Program p) {
+	Type check(Program p) throws ProgramError {
 		return (Type) p.accept(this, null);
 	}
 
-	public Type visit(Program p, Env<Type> env) {
+	public Type visit(Program p, Env<Type> env) throws ProgramError {
 		Env<Type> new_env = env;
 
 		for (DefineDecl d : p.decls()) {
@@ -39,7 +39,7 @@ public class Checker implements Visitor<Type, Type> {
 		return (Type) p.e().accept(this, new_env);
 	}
 
-	public Type visit(VarExp e, Env<Type> env) {
+	public Type visit(VarExp e, Env<Type> env) throws ProgramError {
 		try {
 			return env.get(e.name());
 		} catch (Exception ex) {
@@ -47,7 +47,7 @@ public class Checker implements Visitor<Type, Type> {
 		}
 	}
 
-	public Type visit(LetExp e, Env<Type> env) {
+	public Type visit(LetExp e, Env<Type> env) throws ProgramError {
 		List<String> names = e.names();
 		List<Exp> value_exps = e.value_exps();
 		List<Type> types = e.varTypes();
@@ -78,12 +78,12 @@ public class Checker implements Visitor<Type, Type> {
 		return (Type) e.body().accept(this, new_env);
 	}
 
-	public Type visit(DefineDecl d, Env<Type> env) {
+	public Type visit(DefineDecl d, Env<Type> env) throws ProgramError {
 		Env<Type> new_env = new ExtendEnv<Type>(env, d._name, d._type);
 		return (Type) d._value_exp.accept(this, new_env);
 	}
 
-	public Type visit(LambdaExp e, Env<Type> env) {
+	public Type visit(LambdaExp e, Env<Type> env) throws ProgramError {
 		List<String> names = e.formals();
 		List<Type> types = e.formal_types();
 
@@ -122,7 +122,7 @@ public class Checker implements Visitor<Type, Type> {
 		return new ErrorT(message + ts.visit(e, null));
 	}
 
-	public Type visit(CallExp e, Env<Type> env) {
+	public Type visit(CallExp e, Env<Type> env) throws ProgramError {
 		Exp operator = e.operator();
 		List<Exp> operands = e.operands();
 
@@ -160,7 +160,7 @@ public class Checker implements Visitor<Type, Type> {
 		return new ErrorT(message + ts.visit(e, null));
 	}
 
-	public Type visit(LetrecExp e, Env<Type> env) {
+	public Type visit(LetrecExp e, Env<Type> env) throws ProgramError {
 		List<String> names = e.names();
 		List<Type> types = e.types();
 		List<Exp> fun_exps = e.fun_exps();
@@ -188,7 +188,7 @@ public class Checker implements Visitor<Type, Type> {
 		return (Type) e.body().accept(this, new_env);
 	}
 
-	public Type visit(IfExp e, Env<Type> env) {
+	public Type visit(IfExp e, Env<Type> env) throws ProgramError {
 		Exp cond = e.conditional();
 		Type condType = (Type) cond.accept(this, env);
 		if (condType instanceof ErrorT) {
@@ -218,7 +218,7 @@ public class Checker implements Visitor<Type, Type> {
 				+ thentype.tostring() + " else has type " + elsetype.tostring() + " in " + ts.visit(e, null));
 	}
 
-	public Type visit(CarExp e, Env<Type> env) {
+	public Type visit(CarExp e, Env<Type> env) throws ProgramError {
 		Exp exp = e.arg();
 		Type type = (Type) exp.accept(this, env);
 		if (type instanceof ErrorT) {
@@ -234,7 +234,7 @@ public class Checker implements Visitor<Type, Type> {
 				"The car expect an expression of type Pair, found " + type.tostring() + " in " + ts.visit(e, null));
 	}
 
-	public Type visit(CdrExp e, Env<Type> env) {
+	public Type visit(CdrExp e, Env<Type> env) throws ProgramError {
 		Exp exp = e.arg();
 		Type type = (Type) exp.accept(this, env);
 		if (type instanceof ErrorT) {
@@ -250,7 +250,7 @@ public class Checker implements Visitor<Type, Type> {
 				"The cdr expect an expression of type Pair, found " + type.tostring() + " in " + ts.visit(e, null));
 	}
 
-	public Type visit(ConsExp e, Env<Type> env) {
+	public Type visit(ConsExp e, Env<Type> env) throws ProgramError {
 		Exp fst = e.fst();
 		Exp snd = e.snd();
 
@@ -267,7 +267,7 @@ public class Checker implements Visitor<Type, Type> {
 		return new PairT(t1, t2);
 	}
 
-	public Type visit(ListExp e, Env<Type> env) {
+	public Type visit(ListExp e, Env<Type> env) throws ProgramError {
 		List<Exp> elems = e.elems();
 		Type type = e.type();
 
@@ -287,7 +287,7 @@ public class Checker implements Visitor<Type, Type> {
 		return new ListT(type);
 	}
 
-	public Type visit(NullExp e, Env<Type> env) {
+	public Type visit(NullExp e, Env<Type> env) throws ProgramError {
 		Exp arg = e.arg();
 		Type type = (Type) arg.accept(this, env);
 		if (type instanceof ErrorT) {
@@ -302,7 +302,7 @@ public class Checker implements Visitor<Type, Type> {
 				"The null? expects an expression of type List, found " + type.tostring() + " in " + ts.visit(e, null));
 	}
 
-	public Type visit(RefExp e, Env<Type> env) {
+	public Type visit(RefExp e, Env<Type> env) throws ProgramError {
 		Exp value = e.value_exp();
 		Type type = e.type();
 		Type expType = (Type) value.accept(this, env);
@@ -318,7 +318,7 @@ public class Checker implements Visitor<Type, Type> {
 				+ ts.visit(e, null));
 	}
 
-	public Type visit(DerefExp e, Env<Type> env) {
+	public Type visit(DerefExp e, Env<Type> env) throws ProgramError {
 		Exp exp = e.loc_exp();
 		Type type = (Type) exp.accept(this, env);
 		if (type instanceof ErrorT) {
@@ -334,7 +334,7 @@ public class Checker implements Visitor<Type, Type> {
 				+ ts.visit(e, null));
 	}
 
-	public Type visit(AssignExp e, Env<Type> env) {
+	public Type visit(AssignExp e, Env<Type> env) throws ProgramError {
 		Exp lhs_exp = e.lhs_exp();
 		Type lhsType = (Type) lhs_exp.accept(this, env);
 		if (lhsType instanceof ErrorT) {
@@ -363,7 +363,7 @@ public class Checker implements Visitor<Type, Type> {
 				+ lhsType.tostring() + " in " + ts.visit(e, null));
 	}
 
-	public Type visit(FreeExp e, Env<Type> env) {
+	public Type visit(FreeExp e, Env<Type> env) throws ProgramError {
 		Exp exp = e.value_exp();
 		Type type = (Type) exp.accept(this, env);
 
@@ -379,43 +379,43 @@ public class Checker implements Visitor<Type, Type> {
 				+ ts.visit(e, null));
 	}
 
-	public Type visit(UnitExp e, Env<Type> env) {
+	public Type visit(UnitExp e, Env<Type> env) throws ProgramError {
 		return Type.UnitT.getInstance();
 	}
 
-	public Type visit(NumExp e, Env<Type> env) {
+	public Type visit(NumExp e, Env<Type> env) throws ProgramError {
 		return Type.NumT.getInstance();
 	}
 
-	public Type visit(StrExp e, Env<Type> env) {
+	public Type visit(StrExp e, Env<Type> env) throws ProgramError {
 		return Type.StringT.getInstance();
 	}
 
-	public Type visit(BoolExp e, Env<Type> env) {
+	public Type visit(BoolExp e, Env<Type> env) throws ProgramError {
 		return Type.BoolT.getInstance();
 	}
 
-	public Type visit(LessExp e, Env<Type> env) {
+	public Type visit(LessExp e, Env<Type> env) throws ProgramError {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(LessEqExp e, Env<Type> env) {
+	public Type visit(LessEqExp e, Env<Type> env) throws ProgramError {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(EqualExp e, Env<Type> env) {
+	public Type visit(EqualExp e, Env<Type> env) throws ProgramError {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(GreaterExp e, Env<Type> env) {
+	public Type visit(GreaterExp e, Env<Type> env) throws ProgramError {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(GreaterEqExp e, Env<Type> env) {
+	public Type visit(GreaterEqExp e, Env<Type> env) throws ProgramError {
 		return visitBinaryComparator(e, env, ts.visit(e, null));
 	}
 
-	private Type visitBinaryComparator(BinaryComparator e, Env<Type> env, String printNode) {
+	private Type visitBinaryComparator(BinaryComparator e, Env<Type> env, String printNode) throws ProgramError {
 		Exp first_exp = e.first_exp();
 		Exp second_exp = e.second_exp();
 
@@ -442,27 +442,27 @@ public class Checker implements Visitor<Type, Type> {
 		return BoolT.getInstance();
 	}
 
-	public Type visit(AddExp e, Env<Type> env) {
+	public Type visit(AddExp e, Env<Type> env) throws ProgramError {
 		return visitCompoundArithExp(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(DivExp e, Env<Type> env) {
+	public Type visit(DivExp e, Env<Type> env) throws ProgramError {
 		return visitCompoundArithExp(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(MultExp e, Env<Type> env) {
+	public Type visit(MultExp e, Env<Type> env) throws ProgramError {
 		return visitCompoundArithExp(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(SubExp e, Env<Type> env) {
+	public Type visit(SubExp e, Env<Type> env) throws ProgramError {
 		return visitCompoundArithExp(e, env, ts.visit(e, null));
 	}
 
-	public Type visit(ErrorExp e, Env<Type> env) {
+	public Type visit(ErrorExp e, Env<Type> env) throws ProgramError {
 		return new ErrorT("Encountered an error type " + ts.visit(e, null));
 	}
 
-	private Type visitCompoundArithExp(CompoundArithExp e, Env<Type> env, String printNode) {
+	private Type visitCompoundArithExp(CompoundArithExp e, Env<Type> env, String printNode) throws ProgramError {
 		List<Exp> operands = e.all();
 
 		for (Exp exp : operands) {
@@ -488,16 +488,16 @@ public class Checker implements Visitor<Type, Type> {
 		return t1.typeEqual(t2);
 	}
 
-	public Type visit(ReadExp e, Env<Type> env) {
+	public Type visit(ReadExp e, Env<Type> env) throws ProgramError {
 		return UnitT.getInstance();
 	}
 
-	public Type visit(EvalExp e, Env<Type> env) {
+	public Type visit(EvalExp e, Env<Type> env) throws ProgramError {
 		return UnitT.getInstance();
 	}
 
 	@Override
-	public Type visit(IsNullExp e, Env<Type> env) {
+	public Type visit(IsNullExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -506,7 +506,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsProcedureExp e, Env<Type> env) {
+	public Type visit(IsProcedureExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -515,7 +515,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsListExp e, Env<Type> env) {
+	public Type visit(IsListExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -524,7 +524,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsPairExp e, Env<Type> env) {
+	public Type visit(IsPairExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -533,7 +533,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsUnitExp e, Env<Type> env) {
+	public Type visit(IsUnitExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -542,7 +542,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsNumberExp e, Env<Type> env) {
+	public Type visit(IsNumberExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -551,7 +551,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsStringExp e, Env<Type> env) {
+	public Type visit(IsStringExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -560,7 +560,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(IsBooleanExp e, Env<Type> env) {
+	public Type visit(IsBooleanExp e, Env<Type> env) throws ProgramError {
 		Type exp_type = (Type) e.exp().accept(this, env);
 		if (exp_type instanceof ErrorT) {
 			return exp_type;
@@ -569,7 +569,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(FuncSpec e, Env<Type> env) {
+	public Type visit(FuncSpec e, Env<Type> env) throws ProgramError {
 		for (SpecCase speccase: e.speccases()) {
 			Type spcasetype = speccase.accept(this, env); 
 			if(spcasetype instanceof ErrorT) return spcasetype;
@@ -578,7 +578,7 @@ public class Checker implements Visitor<Type, Type> {
 	}
 
 	@Override
-	public Type visit(SpecCase e, Env<Type> env) {
+	public Type visit(SpecCase e, Env<Type> env) throws ProgramError {
 		for (Exp precondition : e.preconditions()) {
 			Type precond_type = (Type) precondition.accept(this, env);
 			if (precond_type instanceof ErrorT) 
@@ -627,6 +627,8 @@ public class Checker implements Visitor<Type, Type> {
 			} catch (IOException e) {
 				System.out.println("Error reading input:" + e.getMessage());
 			} catch (NullPointerException e) {
+				System.out.println("Error:" + e.getMessage());
+			} catch (ProgramError e) {
 				System.out.println("Error:" + e.getMessage());
 			}
 		}
