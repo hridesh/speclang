@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import speclang.AST.*;
 import speclang.parser.*;
 
+@SuppressWarnings("deprecation")
 public class Reader {
 
 	public Program read() throws IOException {
